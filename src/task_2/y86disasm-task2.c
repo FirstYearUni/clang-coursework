@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *register_names[] =
+const char *registerNames[] =
     {
         "%eax",
         "%ecx",
@@ -126,7 +126,8 @@ char *getOpCode(int opCodeHex)
 }
 //This is an array of register mnemonics in y86
 
-int *getRegIndexes(int hex) {
+int *getRegIndexes(int hex)
+{
   int regIndexes[2] = {0, 0};
   regIndexes[0] = hex / 0x10;
   regIndexes[1] = hex % 0x10;
@@ -135,16 +136,30 @@ int *getRegIndexes(int hex) {
 char *printY86Instruction(unsigned char instruction[])
 {
   char *opcode = getOpCode(instruction[0]);
+  // instructions with no operands
   if (instruction[0] == 0x10 || instruction[0] == 0x90 || instruction[0] == 0x00)
   {
     return opcode;
   }
+  // instructions with registers as operands
   else if (
       (instruction[0] >= 20 && instruction[0] <= 26) ||
       (instruction[0] >= 0x60 && instruction[0] <= 0x63))
   {
-
+    char *regIndexes = getRegIndexes(instruction[1]);
+    char *regA = registerNames[regIndexes[0]];
+    char *regB = registerNames[regIndexes[1]];
+    char *opCodeWithSpace = strcat(opcode, " ");
+    char *opCodeWithRegA = strcat(opCodeWithSpace, regA);
+    char *regBwithSpace = strcat(", ", regB);
+    return strcat(opCodeWithRegA, regBwithSpace);
+  } else if (instruction[0] == 0xA0 ||instruction[0] == 0xB0) {
+    char *regIndexes = getRegIndexes(instruction[1]);
+    char *regA = registerNames[regIndexes[0]];
+    char *opcodeWithSpace = strcat(opcode, " ");
+    return strcat(opcodeWithSpace, regA); 
   }
+  // instructions with intermediate values as operands
 }
 int convertStrToByteCode(const char *str, unsigned char inst[], int size);
 
