@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *registerNames[] =
+char *registerNames[] =
     {
         "%eax",
         "%ecx",
@@ -133,9 +133,23 @@ int *getRegIndexes(int hex)
   regIndexes[1] = hex % 0x10;
   return regIndexes;
 }
-char *printY86Instruction(unsigned char instruction[])
+
+char *convertIntToString(long src) {
+  char *str;
+  sprintf(str, "%ld", src);
+  return str;
+}
+
+long ConvertLittleEndian(int bytes[])
+{
+  long normalNumber = (bytes[0]) + (bytes[1] << 8) + (bytes[2] << 16) +
+                     (bytes[3] << 24);
+  return normalNumber;
+}
+char *getY86Instruction(unsigned char instruction[])
 {
   char *opcode = getOpCode(instruction[0]);
+  char *opcodeWithSpace = strcat(opcode, " ");
   // instructions with no operands
   if (instruction[0] == 0x10 || instruction[0] == 0x90 || instruction[0] == 0x00)
   {
@@ -146,20 +160,65 @@ char *printY86Instruction(unsigned char instruction[])
       (instruction[0] >= 20 && instruction[0] <= 26) ||
       (instruction[0] >= 0x60 && instruction[0] <= 0x63))
   {
-    char *regIndexes = getRegIndexes(instruction[1]);
+    int *regIndexes = getRegIndexes(instruction[1]);
     char *regA = registerNames[regIndexes[0]];
     char *regB = registerNames[regIndexes[1]];
     char *opCodeWithSpace = strcat(opcode, " ");
     char *opCodeWithRegA = strcat(opCodeWithSpace, regA);
     char *regBwithSpace = strcat(", ", regB);
     return strcat(opCodeWithRegA, regBwithSpace);
-  } else if (instruction[0] == 0xA0 ||instruction[0] == 0xB0) {
-    char *regIndexes = getRegIndexes(instruction[1]);
+  }
+  else if (instruction[0] == 0xA0 || instruction[0] == 0xB0)
+  {
+    int *regIndexes = getRegIndexes(instruction[1]);
     char *regA = registerNames[regIndexes[0]];
-    char *opcodeWithSpace = strcat(opcode, " ");
-    return strcat(opcodeWithSpace, regA); 
+    return strcat(opcodeWithSpace, regA);
   }
   // instructions with intermediate values as operands
+  else if (
+      instruction[0] == 0x30 ||
+      instruction[0] == 0x40 ||
+      instruction[0] == 0x50)
+  {
+    // movement instructions with intermediate values
+    int *regIndexes = getRegIndexes(instruction[1]);
+    char *regA = registerNames[regIndexes[0]];
+    char *regB = registerNames[regIndexes[1]];
+    int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
+    long number = ConvertLittleEndian(bytesToParse);
+    char *numberAsString[100];
+    strcpy(numberAsString, convertIntToString(number));
+    char *numberWithSpace = strcat(numberAsString, ", ");
+    if (instruction[0] == 0x30)
+    {
+      printf("%s $%d, %", opcodeWithSpace, number);
+      return strcat(strcat(opcodeWithSpace, numberWithSpace), regB);
+    }
+    else if (instruction[0] == 0x40)
+    {
+      // format the given number with brackets
+      char *numberWithLeftParatheses = strcat(numberAsString, "(");
+      char *numberWithRightParatheses = strcat(regB, ")");
+      // join the parts into a value enclosed in brackets with another value.
+      char *secondAttribute = strcat(numberWithLeftParatheses, numberWithRightParatheses);
+      // join opCode with space and regA as well as attaching the second attribute to get the full instruction.
+      return strcat(strcat(opcodeWithSpace, regA), secondAttribute);
+    }
+  }
+  else if (
+      (instruction[0] >= 70 && instruction[0] <= 0x76) ||
+      instruction[0] == 0x80)
+  {
+    int bytesToParse[] = {instruction[1],
+                          instruction[2],
+                          instruction[3],
+                          instruction[4]};
+
+    long destination = ConvertLittleEndian(bytesToParse);
+    char *destAsString[100];
+    strcpy(destAsString, convertIntToString(destination));
+    return strcat(opcodeWithSpace, destAsString);
+  }
 }
 int convertStrToByteCode(const char *str, unsigned char inst[], int size);
 
@@ -196,7 +255,8 @@ int main(int argc, char **argv)
     //TODO: From here, your task is to complete the implementation so that all y86 opcode and operands can be disassembled.
     //Any undisassembled opcode should display as "TODO: undisassembled opcode and operands"
     char *opcode = getOpCode(instruction[0]);
-    printf("TODO: undisassembled opcode and operands. The first byte of the instruction is 0x%X %s\n", instruction[4], opcode);
+    char *fullInstruction = getY86Instruction(instruction);
+    printf("%s", fullInstruction);
   }
 
   fclose(pFile);
