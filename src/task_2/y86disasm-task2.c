@@ -135,9 +135,10 @@ int *getRegIndexes(int hex)
 }
 
 char *convertIntToString(long src) {
-  char *str;
+ char str[100];
   sprintf(str, "%ld", src);
-  return str;
+  char *result = str;
+  return result;
 }
 
 long ConvertLittleEndian(int bytes[])
@@ -149,7 +150,8 @@ long ConvertLittleEndian(int bytes[])
 char *getY86Instruction(unsigned char instruction[])
 {
   char *opcode = getOpCode(instruction[0]);
-  char *opcodeWithSpace = strcat(opcode, " ");
+  strcat(opcode, " ");
+  char *finalInstruction = opcode;
   // instructions with no operands
   if (instruction[0] == 0x10 || instruction[0] == 0x90 || instruction[0] == 0x00)
   {
@@ -163,16 +165,18 @@ char *getY86Instruction(unsigned char instruction[])
     int *regIndexes = getRegIndexes(instruction[1]);
     char *regA = registerNames[regIndexes[0]];
     char *regB = registerNames[regIndexes[1]];
-    char *opCodeWithSpace = strcat(opcode, " ");
-    char *opCodeWithRegA = strcat(opCodeWithSpace, regA);
-    char *regBwithSpace = strcat(", ", regB);
-    return strcat(opCodeWithRegA, regBwithSpace);
+    // attach the different parts of the instuction
+    strcat(finalInstruction, regA);
+    strcat(finalInstruction, ", ");
+    strcat(finalInstruction, regB);
+    return finalInstruction;
   }
   else if (instruction[0] == 0xA0 || instruction[0] == 0xB0)
   {
     int *regIndexes = getRegIndexes(instruction[1]);
     char *regA = registerNames[regIndexes[0]];
-    return strcat(opcodeWithSpace, regA);
+    strcat(finalInstruction, regA);
+    return finalInstruction;
   }
   // instructions with intermediate values as operands
   else if (
@@ -186,23 +190,28 @@ char *getY86Instruction(unsigned char instruction[])
     char *regB = registerNames[regIndexes[1]];
     int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
     long number = ConvertLittleEndian(bytesToParse);
-    char *numberAsString[100];
+    char numberAsString[100];
     strcpy(numberAsString, convertIntToString(number));
-    char *numberWithSpace = strcat(numberAsString, ", ");
+    strcat(numberAsString, ", ");
     if (instruction[0] == 0x30)
     {
-      printf("%s $%d, %", opcodeWithSpace, number);
-      return strcat(strcat(opcodeWithSpace, numberWithSpace), regB);
+      printf("%s $%ld, %", finalInstruction, number);
+      strcat(finalInstruction, numberAsString);
+      strcat(finalInstruction, regB);
+      return finalInstruction;
     }
     else if (instruction[0] == 0x40)
     {
       // format the given number with brackets
-      char *numberWithLeftParatheses = strcat(numberAsString, "(");
-      char *numberWithRightParatheses = strcat(regB, ")");
+      strcat(numberAsString, "(");
+      strcat(regB, ")");
       // join the parts into a value enclosed in brackets with another value.
-      char *secondAttribute = strcat(numberWithLeftParatheses, numberWithRightParatheses);
+      strcat(numberAsString, regB);
       // join opCode with space and regA as well as attaching the second attribute to get the full instruction.
-      return strcat(strcat(opcodeWithSpace, regA), secondAttribute);
+      strcat(finalInstruction, regA);
+      strcat(finalInstruction, ", ");
+      strcat(finalInstruction, numberAsString);
+      return finalInstruction;
     }
   }
   else if (
@@ -215,9 +224,9 @@ char *getY86Instruction(unsigned char instruction[])
                           instruction[4]};
 
     long destination = ConvertLittleEndian(bytesToParse);
-    char *destAsString[100];
-    strcpy(destAsString, convertIntToString(destination));
-    return strcat(opcodeWithSpace, destAsString);
+    char *destAsString = convertIntToString(destination);
+    strcat(finalInstruction, destAsString);
+    return finalInstruction;
   }
 }
 int convertStrToByteCode(const char *str, unsigned char inst[], int size);
