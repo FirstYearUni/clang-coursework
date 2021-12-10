@@ -12,7 +12,8 @@ char *registerNames[] =
         "%ebp",
         "%esi",
         "%edi",
-        "UNKNOWN_REGSITER"};
+        "%ebi"
+    };
 /* 00 & 10 */
 char *simple[] = {
     "halt",
@@ -128,14 +129,23 @@ char *getOpCode(int opCodeHex)
 
 int *getRegIndexes(int hex)
 {
+
   int regIndexes[2] = {0, 0};
   regIndexes[0] = hex / 0x10;
   regIndexes[1] = hex % 0x10;
+  if (hex == 0x82 ||
+      hex == 0x15 ||
+      hex == 0x64)
+  {
+    printf("%x %s %s\n", hex, registerNames[regIndexes[1]], registerNames[regIndexes[0]]);
+  }
+  // printf("%s %d %s %d \n", registerNames[regIndexes[0]], regIndexes[0], registerNames[regIndexes[1], regIndexes[1]]);
   return regIndexes;
 }
 
-char *convertIntToString(long src) {
- char str[100];
+char *convertIntToString(long src)
+{
+  char str[100];
   sprintf(str, "%ld", src);
   char *result = str;
   return result;
@@ -144,7 +154,7 @@ char *convertIntToString(long src) {
 long ConvertLittleEndian(int bytes[])
 {
   long normalNumber = (bytes[0]) + (bytes[1] << 8) + (bytes[2] << 16) +
-                     (bytes[3] << 24);
+                      (bytes[3] << 24);
   return normalNumber;
 }
 char *getY86Instruction(unsigned char instruction[])
@@ -160,11 +170,11 @@ char *getY86Instruction(unsigned char instruction[])
   }
   // instructions with registers as operands
   else if (
-      (instruction[0] >= 20 && instruction[0] <= 26) ||
+      (instruction[0] >= 0x20 && instruction[0] <= 0x26) ||
       (instruction[0] >= 0x60 && instruction[0] <= 0x63))
   {
     int *regIndexes = getRegIndexes(instruction[1]);
-    char regA[10]; 
+    char regA[10];
     strcpy(regA, registerNames[regIndexes[0]]);
     char regB[10];
     strcpy(regB, registerNames[regIndexes[1]]);
@@ -177,8 +187,8 @@ char *getY86Instruction(unsigned char instruction[])
   else if (instruction[0] == 0xA0 || instruction[0] == 0xB0)
   {
     int *regIndexes = getRegIndexes(instruction[1]);
-    char regA[10]; 
-    strcpy(regA, convertIntToString(registerNames[regIndexes[0]]));
+    char regA[10];
+    strcpy(regA, registerNames[regIndexes[0]]);
     strcat(finalInstruction, regA);
     return finalInstruction;
   }
@@ -190,17 +200,24 @@ char *getY86Instruction(unsigned char instruction[])
   {
     // movement instructions with intermediate values
     int *regIndexes = getRegIndexes(instruction[1]);
-    char regA[10]; 
-    strcpy(regA, convertIntToString(registerNames[regIndexes[0]]));
+    // print the size of regIndexes
+    printf("size: %lu\n", sizeof(regIndexes)/ sizeof(1));
+    printf("\n");
+    char regA[10];
+    printf("opcode: %x regs: %x\n", instruction[0], instruction[1]);
+    // printf("%d", strncmp(registerNames[regIndexes[0]], "%ebi", 4));
+    printf("%s %d\n", strncmp(registerNames[regIndexes[0]], "%ebi", 4) == 0 ? "UNKOWN_REGISTER":registerNames[regIndexes[0]] , regIndexes[0]);
+    printf("%s %d\n", registerNames[regIndexes[1]], regIndexes[1]);
+    strcpy(regA, registerNames[regIndexes[0]]);
     char regB[10];
-    strcpy(regB, convertIntToString(registerNames[regIndexes[1]]));
+    strcpy(regB, registerNames[regIndexes[1]]);
     int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
     long number = ConvertLittleEndian(bytesToParse);
     char numberAsString[100];
     strcpy(numberAsString, convertIntToString(number));
-    strcat(numberAsString, ", ");
     if (instruction[0] == 0x30)
     {
+      strcat(numberAsString, ", ");
       strcat(finalInstruction, numberAsString);
       strcat(finalInstruction, regB);
       return finalInstruction;
@@ -216,6 +233,15 @@ char *getY86Instruction(unsigned char instruction[])
       strcat(finalInstruction, regA);
       strcat(finalInstruction, ", ");
       strcat(finalInstruction, numberAsString);
+      return finalInstruction;
+    }
+    else if (instruction[0] == 0x50)
+    {
+      strcat(finalInstruction, numberAsString);
+      strcat(finalInstruction, "(");
+      strcat(finalInstruction, regB);
+      strcat(finalInstruction, "), ");
+      strcat(finalInstruction, regA);
       return finalInstruction;
     }
   }

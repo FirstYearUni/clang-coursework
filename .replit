@@ -1,0 +1,2 @@
+language = "c"
+run = "clang  ./src/task_2/y86-2.c -o ./src/task_2/exec && ./src/task_2/exec ./src/task_2/test2.txt"
