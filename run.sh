@@ -1,0 +1,1 @@
+clang ./src/task_2/y86-2.c -o ./dist/task_2/exec && ./dist/task_2/exec ./src/test2.txt

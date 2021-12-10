@@ -155,11 +155,17 @@ char *getY86Instruction(unsigned char instruction[])
 {
   char opcode[100];
   strcpy(opcode, getOpCode(instruction[0]));
-  strcat(opcode, " ");
+  if (instruction[0] == 0x30) {
+    strcat(opcode, " $");
+  } else {
+    strcat(opcode, " ");
+  }
+  
   char *finalInstruction = opcode;
   // instructions with no operands
   if (instruction[0] == 0x10 || instruction[0] == 0x90 || instruction[0] == 0x00)
   {
+    printf("");
     return opcode;
   }
   // instructions with registers as operands
@@ -209,6 +215,8 @@ char *getY86Instruction(unsigned char instruction[])
     strcpy(numberAsString, convertIntToString(number));
     if (instruction[0] == 0x30)
     {
+      printf("");
+      // strcat("$", numberAsString)
       strcat(numberAsString, ", ");
       strcat(finalInstruction, numberAsString);
       strcat(finalInstruction, regB);
