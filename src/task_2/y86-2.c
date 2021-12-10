@@ -12,7 +12,8 @@ char *registerNames[] =
         "%ebp",
         "%esi",
         "%edi",
-        "UNKNOWN_REGSITER"};
+        "%ebi"
+    };
 /* 00 & 10 */
 char *simple[] = {
     "halt",
@@ -204,8 +205,9 @@ char *getY86Instruction(unsigned char instruction[])
     printf("\n");
     char regA[10];
     printf("opcode: %x regs: %x\n", instruction[0], instruction[1]);
-    printf("%d\n", regIndexes[0]);
-    printf("%d\n", regIndexes[1]);
+    // printf("%d", strncmp(registerNames[regIndexes[0]], "%ebi", 4));
+    printf("%s %d\n", strncmp(registerNames[regIndexes[0]], "%ebi", 4) == 0 ? "UNKOWN_REGISTER":registerNames[regIndexes[0]] , regIndexes[0]);
+    printf("%s %d\n", registerNames[regIndexes[1]], regIndexes[1]);
     strcpy(regA, registerNames[regIndexes[0]]);
     char regB[10];
     strcpy(regB, registerNames[regIndexes[1]]);
