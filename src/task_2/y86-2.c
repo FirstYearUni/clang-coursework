@@ -12,7 +12,7 @@ char *registerNames[] =
         "%ebp",
         "%esi",
         "%edi",
-        "%ebi"
+        "UNKOWN_REGISTER"
     };
 /* 00 & 10 */
 char *simple[] = {
@@ -133,12 +133,6 @@ int *getRegIndexes(int hex)
   int regIndexes[2] = {0, 0};
   regIndexes[0] = hex / 0x10;
   regIndexes[1] = hex % 0x10;
-  if (hex == 0x82 ||
-      hex == 0x15 ||
-      hex == 0x64)
-  {
-    printf("%x %s %s\n", hex, registerNames[regIndexes[1]], registerNames[regIndexes[0]]);
-  }
   // printf("%s %d %s %d \n", registerNames[regIndexes[0]], regIndexes[0], registerNames[regIndexes[1], regIndexes[1]]);
   return regIndexes;
 }
@@ -174,9 +168,9 @@ char *getY86Instruction(unsigned char instruction[])
       (instruction[0] >= 0x60 && instruction[0] <= 0x63))
   {
     int *regIndexes = getRegIndexes(instruction[1]);
-    char regA[10];
+    char regA[100];
     strcpy(regA, registerNames[regIndexes[0]]);
-    char regB[10];
+    char regB[100];
     strcpy(regB, registerNames[regIndexes[1]]);
     // attach the different parts of the instuction
     strcat(finalInstruction, regA);
@@ -201,15 +195,13 @@ char *getY86Instruction(unsigned char instruction[])
     // movement instructions with intermediate values
     int *regIndexes = getRegIndexes(instruction[1]);
     // print the size of regIndexes
-    printf("size: %lu\n", sizeof(regIndexes)/ sizeof(1));
-    printf("\n");
-    char regA[10];
-    printf("opcode: %x regs: %x\n", instruction[0], instruction[1]);
+    char regA[100];
+    // printf("opcode: %x regs: %x\n", instruction[0], instruction[1]);
     // printf("%d", strncmp(registerNames[regIndexes[0]], "%ebi", 4));
-    printf("%s %d\n", strncmp(registerNames[regIndexes[0]], "%ebi", 4) == 0 ? "UNKOWN_REGISTER":registerNames[regIndexes[0]] , regIndexes[0]);
-    printf("%s %d\n", registerNames[regIndexes[1]], regIndexes[1]);
+    // printf("%s %d\n", strncmp(registerNames[regIndexes[0]], "%ebi", 4) == 0 ? "UNKOWN_REGISTER":registerNames[regIndexes[0]] , regIndexes[0]);
+    // printf("%s %d\n", registerNames[regIndexes[1]], regIndexes[1]);
     strcpy(regA, registerNames[regIndexes[0]]);
-    char regB[10];
+    char regB[100];
     strcpy(regB, registerNames[regIndexes[1]]);
     int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
     long number = ConvertLittleEndian(bytesToParse);
