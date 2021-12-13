@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include <stdlib.h>
-
+#include <string.h>
 //This is the help function that reads y86 binary code from a file
 unsigned int loadBinFromFile(const char * filename, unsigned char memory[], unsigned int memsize);
 char * registerNames[] = {
@@ -149,6 +149,145 @@ opCodeStruct getOpCode(int opCodeHex, opCodeStruct * opSt) {
   opSt -> opCode = "TODO: undisaasembled opcode";
   return *opSt;
 }
+//This is an array of register mnemonics in y86
+
+int *getRegIndexes(int hex)
+{
+
+  int regIndexes[2] = {0, 0};
+  regIndexes[0] = hex / 0x10;
+  regIndexes[1] = hex % 0x10;
+  // printf("%s %d %s %d \n", registerNames[regIndexes[0]], regIndexes[0], registerNames[regIndexes[1], regIndexes[1]]);
+  return regIndexes;
+}
+
+char *convertIntToString(long src)
+{
+  char str[100];
+  sprintf(str, "%ld", src);
+  char *result = str;
+  return result;
+}
+
+long ConvertLittleEndian(int bytes[])
+{
+  long normalNumber = (bytes[0]) + (bytes[1] << 8) + (bytes[2] << 16) +
+                      (bytes[3] << 24);
+  return normalNumber;
+}
+char *getY86Instruction(unsigned char instruction[])
+{
+  char opcode[100];
+  opCodeStruct opCodeAsStruct;
+  getOpCode(instruction[0], &opCodeAsStruct);
+  strcpy(opcode, opCodeAsStruct.opCode);
+  if (instruction[0] == 0x30) {
+    strcat(opcode, " $");
+  } else {
+    strcat(opcode, " ");
+  }
+  
+  char *finalInstruction = opcode;
+  // instructions with no operands
+  if (instruction[0] == 0x10 || instruction[0] == 0x90 || instruction[0] == 0x00)
+  {
+    printf("");
+    return opcode;
+  }
+  // instructions with registers as operands
+  else if (
+      (instruction[0] >= 0x20 && instruction[0] <= 0x26) ||
+      (instruction[0] >= 0x60 && instruction[0] <= 0x63))
+  {
+    int *regIndexes = getRegIndexes(instruction[1]);
+    char regA[100];
+    strcpy(regA, registerNames[regIndexes[0]]);
+    char regB[100];
+    strcpy(regB, registerNames[regIndexes[1]]);
+    // attach the different parts of the instuction
+    strcat(finalInstruction, regA);
+    strcat(finalInstruction, ", ");
+    strcat(finalInstruction, regB);
+    return finalInstruction;
+  }
+  else if (instruction[0] == 0xA0 || instruction[0] == 0xB0)
+  {
+    int *regIndexes = getRegIndexes(instruction[1]);
+    char regA[10];
+    strcpy(regA, registerNames[regIndexes[0]]);
+    strcat(finalInstruction, regA);
+    return finalInstruction;
+  }
+  // instructions with intermediate values as operands
+  else if (
+      instruction[0] == 0x30 ||
+      instruction[0] == 0x40 ||
+      instruction[0] == 0x50)
+  {
+    // movement instructions with intermediate values
+    int *regIndexes = getRegIndexes(instruction[1]);
+    // print the size of regIndexes
+    char regA[100];
+    // printf("opcode: %x regs: %x\n", instruction[0], instruction[1]);
+    // printf("%d", strncmp(registerNames[regIndexes[0]], "%ebi", 4));
+    // printf("%s %d\n", strncmp(registerNames[regIndexes[0]], "%ebi", 4) == 0 ? "UNKOWN_REGISTER":registerNames[regIndexes[0]] , regIndexes[0]);
+    // printf("%s %d\n", registerNames[regIndexes[1]], regIndexes[1]);
+    strcpy(regA, registerNames[regIndexes[0]]);
+    char regB[100];
+    strcpy(regB, registerNames[regIndexes[1]]);
+    int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
+    long number = ConvertLittleEndian(bytesToParse);
+    char numberAsString[100];
+    strcpy(numberAsString, convertIntToString(number));
+    if (instruction[0] == 0x30)
+    {
+      printf("");
+      // strcat("$", numberAsString)
+      strcat(numberAsString, ", ");
+      strcat(finalInstruction, numberAsString);
+      strcat(finalInstruction, regB);
+      return finalInstruction;
+    }
+    else if (instruction[0] == 0x40)
+    {
+      // format the given number with brackets
+      strcat(numberAsString, "(");
+      strcat(regB, ")");
+      // join the parts into a value enclosed in brackets with another value.
+      strcat(numberAsString, regB);
+      // join opCode with space and regA as well as attaching the second attribute to get the full instruction.
+      strcat(finalInstruction, regA);
+      strcat(finalInstruction, ", ");
+      strcat(finalInstruction, numberAsString);
+      return finalInstruction;
+    }
+    else if (instruction[0] == 0x50)
+    {
+      strcat(finalInstruction, numberAsString);
+      strcat(finalInstruction, "(");
+      strcat(finalInstruction, regB);
+      strcat(finalInstruction, "), ");
+      strcat(finalInstruction, regA);
+      return finalInstruction;
+    }
+  }
+  else if (
+      (instruction[0] >= 70 && instruction[0] <= 0x76) ||
+      instruction[0] == 0x80)
+  {
+    int bytesToParse[] = {instruction[1],
+                          instruction[2],
+                          instruction[3],
+                          instruction[4]};
+
+    long destination = ConvertLittleEndian(bytesToParse);
+    char destAsString[100];
+    strcpy(destAsString, convertIntToString(destination));
+    strcat(finalInstruction, destAsString);
+    return finalInstruction;
+  }
+  return "TODO: undisassembled opcode and operands";
+}
 int main(int argc, char ** argv) {
   unsigned int MAX_MEMSIZE = 4096;
   unsigned char memory[MAX_MEMSIZE]; //This array represents the 4KB memory space
@@ -169,7 +308,17 @@ int main(int argc, char ** argv) {
   while (PC < program_size) {
     opCodeStruct tmp;
     getOpCode(memory[PC], &tmp);
-    printf("%02X size: %d opcode: %s\n", memory[PC], tmp.size, tmp.opCode);
+    if (tmp.size > 0) {
+      unsigned char instruction[100];
+      for (int i=0; i<tmp.size; i++){
+        instruction[i] = memory[PC];
+        PC++;
+      }
+      char *decodedInstruction = getY86Instruction(instruction);
+      printf("%s\n", decodedInstruction);
+      PC++;
+    }
+    // printf("%02X size: %d opcode: %s\n", memory[PC], tmp.size, tmp.opCode);
 
     PC++;
   }
