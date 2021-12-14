@@ -93,17 +93,17 @@ opCodeStruct getOpCode(int opCodeHex, opCodeStruct * opSt) {
     // return (move[opCodeHex - 0x20]);
   } else if (opCodeHex >= 0x30 && opCodeHex <= 0x50) {
     if (opCodeHex == 0x30) {
-      opSt -> size = 5;
+      opSt -> size = 6;
       opSt -> opCode = move_intermediate[0];
       return *opSt;
       // return (move_intermediate[0]);
     } else if (opCodeHex == 0x40) {
-      opSt -> size = 5;
+      opSt -> size = 6;
       opSt -> opCode = move_intermediate[1];
       return *opSt;
       // return (move_intermediate[1]);
     } else if (opCodeHex == 0x50) {
-      opSt -> size = 5;
+      opSt -> size = 6;
       opSt -> opCode = move_intermediate[2];
       return *opSt;
       // return (move_intermediate[2]);
@@ -128,18 +128,18 @@ opCodeStruct getOpCode(int opCodeHex, opCodeStruct * opSt) {
 
     // return (al[opCodeHex - 0x60]);
   } else if (opCodeHex >= 0x70 && opCodeHex <= 0x76) {
-    opSt -> size = 2;
+    opSt -> size = 5;
     opSt -> opCode = jump[opCodeHex - 0x70];
     return *opSt;
     // return (jump[opCodeHex - 0x70]);
   } else if (opCodeHex >= 0x80 && opCodeHex <= 0x90) {
     if (opCodeHex == 0x80) {
-      opSt -> size = 2;
+      opSt -> size = 5;
       opSt -> opCode = fn[0];
       return *opSt;
       // return (fn[0]);
     } else if (opCodeHex == 0x90) {
-      opSt -> size = 2;
+      opSt -> size = 1;
       opSt -> opCode = fn[1];
       return *opSt;
       // return (fn[1]);
