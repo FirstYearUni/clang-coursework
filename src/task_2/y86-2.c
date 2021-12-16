@@ -145,7 +145,7 @@ char *convertIntToString(long src)
   return result;
 }
 
-long ConvertLittleEndian(int bytes[])
+long ConvertLittleEndian(int bytes[], char hasNoregs)
 {
   long normalNumber = (bytes[0]) + (bytes[1] << 8) + (bytes[2] << 16) +
                       (bytes[3] << 24);
@@ -210,7 +210,7 @@ char *getY86Instruction(unsigned char instruction[])
     char regB[100];
     strcpy(regB, registerNames[regIndexes[1]]);
     int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
-    long number = ConvertLittleEndian(bytesToParse);
+    long number = ConvertLittleEndian(bytesToParse, 0);
     char numberAsString[100];
     strcpy(numberAsString, convertIntToString(number));
     if (instruction[0] == 0x30)
@@ -254,7 +254,7 @@ char *getY86Instruction(unsigned char instruction[])
                           instruction[3],
                           instruction[4]};
 
-    long destination = ConvertLittleEndian(bytesToParse);
+    long destination = ConvertLittleEndian(bytesToParse, 1);
     char destAsString[100];
     strcpy(destAsString, convertIntToString(destination));
     strcat(finalInstruction, destAsString);
