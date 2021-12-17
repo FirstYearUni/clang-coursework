@@ -138,10 +138,10 @@ int *getRegIndexes(int hex)
   return regIndexes;
 }
 // returns a string format of a number so It can be concatenated to other strings
-char *convertIntToString(long src)
+char *convertIntToString(int src, char isJumpInstruction)
 {
   char str[100];
-  sprintf(str, "%ld", src);
+  sprintf(str, isJumpInstruction == 0 ? "%d": "%u", src);
   char *result = str;
   return result;
 }
@@ -207,9 +207,9 @@ char *getY86Instruction(unsigned char instruction[])
     char regB[100];
     strcpy(regB, registerNames[regIndexes[1]]);
     int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
-    long number = ConvertLittleEndian(bytesToParse);
+    int number = ConvertLittleEndian(bytesToParse);
     char numberAsString[100];
-    strcpy(numberAsString, convertIntToString(number));
+    strcpy(numberAsString, convertIntToString(number, 0));
     if (instruction[0] == 0x30)
     {
       printf("");
@@ -246,10 +246,10 @@ char *getY86Instruction(unsigned char instruction[])
       (instruction[0] >= 70 && instruction[0] <= 0x76) ||
       instruction[0] == 0x80)
   {
-    unsigned long destination = (instruction[1]) + (instruction[2] << 8) + (instruction[3] << 16) +
+    unsigned int destination = (instruction[1]) + (instruction[2] << 8) + (instruction[3] << 16) +
                       (instruction[4] << 24);
     char destAsString[100];
-    strcpy(destAsString, convertIntToString(destination));
+    strcpy(destAsString, convertIntToString(destination, 1));
     strcat(finalInstruction, destAsString);
     return finalInstruction;
   }
