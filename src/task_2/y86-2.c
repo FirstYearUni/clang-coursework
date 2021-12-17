@@ -59,6 +59,7 @@ char *fn[] = {
     "call",
     "ret"};
 
+// returns the opCode given the hex opCode
 char *getOpCode(int opCodeHex)
 {
 
@@ -125,7 +126,8 @@ char *getOpCode(int opCodeHex)
   }
   return "TODO: undisaasembled opcode";
 }
-//This is an array of register mnemonics in y86
+//This array returns indexes of the  registermnemonics in the registerNames
+// given the register hex number
 
 int *getRegIndexes(int hex)
 {
@@ -133,10 +135,9 @@ int *getRegIndexes(int hex)
   int regIndexes[2] = {0, 0};
   regIndexes[0] = hex / 0x10;
   regIndexes[1] = hex % 0x10;
-  // printf("%s %d %s %d \n", registerNames[regIndexes[0]], regIndexes[0], registerNames[regIndexes[1], regIndexes[1]]);
   return regIndexes;
 }
-
+// returns a string format of a number so It can be concatenated to other strings
 char *convertIntToString(long src)
 {
   char str[100];
@@ -144,13 +145,14 @@ char *convertIntToString(long src)
   char *result = str;
   return result;
 }
-
-long ConvertLittleEndian(int bytes[], char hasNoregs)
+// this function take the passed array bytes, shifts them and returns the normal number
+long ConvertLittleEndian(int bytes[])
 {
   long normalNumber = (bytes[0]) + (bytes[1] << 8) + (bytes[2] << 16) +
                       (bytes[3] << 24);
   return normalNumber;
 }
+// main decoder takes the full instruction array of bytes and returns a full instructions
 char *getY86Instruction(unsigned char instruction[])
 {
   char opcode[100];
@@ -200,23 +202,17 @@ char *getY86Instruction(unsigned char instruction[])
   {
     // movement instructions with intermediate values
     int *regIndexes = getRegIndexes(instruction[1]);
-    // print the size of regIndexes
     char regA[100];
-    // printf("opcode: %x regs: %x\n", instruction[0], instruction[1]);
-    // printf("%d", strncmp(registerNames[regIndexes[0]], "%ebi", 4));
-    // printf("%s %d\n", strncmp(registerNames[regIndexes[0]], "%ebi", 4) == 0 ? "UNKOWN_REGISTER":registerNames[regIndexes[0]] , regIndexes[0]);
-    // printf("%s %d\n", registerNames[regIndexes[1]], regIndexes[1]);
     strcpy(regA, registerNames[regIndexes[0]]);
     char regB[100];
     strcpy(regB, registerNames[regIndexes[1]]);
     int bytesToParse[4] = {instruction[2], instruction[3], instruction[4], instruction[5]};
-    long number = ConvertLittleEndian(bytesToParse, 0);
+    long number = ConvertLittleEndian(bytesToParse);
     char numberAsString[100];
     strcpy(numberAsString, convertIntToString(number));
     if (instruction[0] == 0x30)
     {
       printf("");
-      // strcat("$", numberAsString)
       strcat(numberAsString, ", ");
       strcat(finalInstruction, numberAsString);
       strcat(finalInstruction, regB);
@@ -245,16 +241,13 @@ char *getY86Instruction(unsigned char instruction[])
       return finalInstruction;
     }
   }
+  // jump instructions
   else if (
       (instruction[0] >= 70 && instruction[0] <= 0x76) ||
       instruction[0] == 0x80)
   {
-    int bytesToParse[] = {instruction[1],
-                          instruction[2],
-                          instruction[3],
-                          instruction[4]};
-
-    long destination = ConvertLittleEndian(bytesToParse, 1);
+    unsigned long destination = (instruction[1]) + (instruction[2] << 8) + (instruction[3] << 16) +
+                      (instruction[4] << 24);
     char destAsString[100];
     strcpy(destAsString, convertIntToString(destination));
     strcat(finalInstruction, destAsString);
@@ -296,7 +289,7 @@ int main(int argc, char **argv)
 
     //TODO: From here, your task is to complete the implementation so that all y86 opcode and operands can be disassembled.
     //Any undisassembled opcode should display as "TODO: undisassembled opcode and operands"
-    char *opcode = getOpCode(instruction[0]);
+    // pull the instruction and print it
     char *fullInstruction = getY86Instruction(instruction);
     printf("%s\n", fullInstruction);
   }
